@@ -45,8 +45,9 @@ internal static class Program
     private static float s_speed = 5.0f;       // Walking Speed
     private static unsafe void Main()
     {
-        fixed (char* statsFormat = "X=%3.2f, Y=%3.2f, A=%3.2f FPS=%3.2f")
+        fixed (char* statsFormat = "X=%3.2f, Y=%3.2f, A=%3.2f FPS=%3.2f ")
         {
+            var writeCoord = new COORD();
             char* screen = stackalloc char[ScreenWidth * ScreenHeight];
             IntPtr hConsole = CreateConsoleScreenBuffer(GenericRead | GenericWrite, 0, IntPtr.Zero, 1, IntPtr.Zero);
             SetConsoleActiveScreenBuffer(hConsole);
@@ -229,7 +230,7 @@ internal static class Program
 
                 // Display Frame
                 screen[ScreenWidth * ScreenHeight - 1] = '\0';
-                WriteConsoleOutputCharacterW(hConsole, screen, ScreenWidth * ScreenHeight, new COORD(), ref bytesWritten);
+                WriteConsoleOutputCharacterW(hConsole, screen, ScreenWidth * ScreenHeight, writeCoord, ref bytesWritten);
             }
         }
     }
