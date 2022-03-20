@@ -225,7 +225,7 @@ internal static class Program
                 for (var nx = 0; nx < MapWidth; nx++)
                 for (var ny = 0; ny < MapHeight; ny++)
                     screen[((ny + 1) * ScreenWidth + nx) + 2] = map[ny * MapWidth + nx];
-                screen[((int) s_playerX + 1) * ScreenWidth + (int) s_playerY] = 'P';
+                screen[(((int) s_playerX + 1) * ScreenWidth + (int) s_playerY) + 2] = 'P';
 
                 // Display Frame
                 screen[ScreenWidth * ScreenHeight - 1] = '\0';
