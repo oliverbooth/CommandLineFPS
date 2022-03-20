@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace CommandLineFPS;
 
@@ -46,6 +47,11 @@ internal static class Program
     private static float s_playerY = 5.09f;    // Player Start Y
     private static float s_speed = 5.0f;       // Walking Speed
 
+    private static volatile bool s_moveForward; // Movement flags
+    private static volatile bool s_moveBack;
+    private static volatile bool s_turnLeft;
+    private static volatile bool s_turnRight;
+
     private static unsafe void Main()
     {
         var writeCoord = new COORD();
@@ -82,6 +88,8 @@ internal static class Program
 
             Span<(float, float)> p = stackalloc (float, float)[4];
 
+            new Thread(InputWorker).Start();
+
             while (true)
             {
                 // We'll need time differential per frame to calculate modification
@@ -90,18 +98,18 @@ internal static class Program
                 tp2 = DateTime.Now;
                 TimeSpan elapsedTime = tp2 - tp1;
                 tp1 = tp2;
-                var elapsedSeconds = (float) elapsedTime.TotalSeconds;
+                float elapsedSeconds = (float) elapsedTime.TotalSeconds;
 
                 // Handle CCW Rotation
-                if ((GetAsyncKeyState('A') & 0x8000) != 0)
+                if (s_turnLeft)
                     s_playerAngle -= (s_speed * 0.75f) * elapsedSeconds;
 
                 // Handle CW Rotation
-                if ((GetAsyncKeyState('D') & 0x8000) != 0)
+                if (s_turnRight)
                     s_playerAngle += (s_speed * 0.75f) * elapsedSeconds;
 
                 // Handle Forwards movement & collision
-                if ((GetAsyncKeyState('W') & 0x8000) != 0)
+                if (s_moveForward)
                 {
                     s_playerX += MathF.Sin(s_playerAngle) * s_speed * elapsedSeconds;
                     s_playerY += MathF.Cos(s_playerAngle) * s_speed * elapsedSeconds;
@@ -113,7 +121,7 @@ internal static class Program
                 }
 
                 // Handle backwards movement & collision
-                if ((GetAsyncKeyState('S') & 0x8000) != 0)
+                if (s_moveBack)
                 {
                     s_playerX -= MathF.Sin(s_playerAngle) * s_speed * elapsedSeconds;
                     s_playerY -= MathF.Cos(s_playerAngle) * s_speed * elapsedSeconds;
@@ -236,6 +244,17 @@ internal static class Program
                 screen[ScreenWidth * ScreenHeight - 1] = '\0';
                 WriteConsoleOutputCharacterW(hConsole, screen, ScreenWidth * ScreenHeight, writeCoord, ref bytesWritten);
             }
+        }
+    }
+
+    private static void InputWorker()
+    {
+        while (true)
+        {
+            s_moveForward = (GetAsyncKeyState('W') & 0x8000) != 0;
+            s_moveBack = (GetAsyncKeyState('S') & 0x8000) != 0;
+            s_turnLeft = (GetAsyncKeyState('A') & 0x8000) != 0;
+            s_turnRight = (GetAsyncKeyState('D') & 0x8000) != 0;
         }
     }
 
