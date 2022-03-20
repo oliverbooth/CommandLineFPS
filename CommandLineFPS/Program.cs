@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace CommandLineFPS;
@@ -10,11 +10,6 @@ internal static class Program
     {
         public short X;
         public short Y;
-    }
-
-    private struct PairComparer : IComparer<(float, float)>
-    {
-        public int Compare((float, float) x, (float, float) y) => x.Item1 < y.Item1 ? -1 : 1;
     }
 
     private const long GenericRead = 0x80000000L;
@@ -53,7 +48,6 @@ internal static class Program
 
     private static unsafe void Main()
     {
-        var comparer = new PairComparer();
         var writeCoord = new COORD();
         char* screen = stackalloc char[ScreenWidth * ScreenHeight];
         IntPtr hConsole = CreateConsoleScreenBuffer(GenericRead | GenericWrite, 0, IntPtr.Zero, 1, IntPtr.Zero);
@@ -183,7 +177,7 @@ internal static class Program
                                 }
 
                                 // Sort Pairs from closest to farthest
-                                p.Sort(comparer);
+                                Sort(p);
 
                                 // First two/three are closest (we will never see all four)
                                 float bound = 0.01f;
@@ -241,6 +235,56 @@ internal static class Program
                 // Display Frame
                 screen[ScreenWidth * ScreenHeight - 1] = '\0';
                 WriteConsoleOutputCharacterW(hConsole, screen, ScreenWidth * ScreenHeight, writeCoord, ref bytesWritten);
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private static void Sort(Span<(float, float)> span)
+    {
+        Sort(span, 0, span.Length - 1);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private static void Sort(Span<(float, float)> span, int left, int right)
+    {
+        while (true)
+        {
+            if (right < 0) right = span.Length + right;
+            if (left >= right) return;
+
+            int pivot = Partition(span, left, right);
+            if (pivot > 1) Sort(span, left, pivot - 1);
+            if (pivot + 1 < right)
+            {
+                left = pivot + 1;
+                continue;
+            }
+
+            break;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private static int Partition(Span<(float, float)> span, int left, int right)
+    {
+        float pivot = span[left].Item1;
+        while (true)
+        {
+            while (span[left].Item1 < pivot)
+                left++;
+
+            while (span[right].Item1 > pivot)
+                right--;
+
+            if (left < right)
+            {
+                if (span[left] == span[right]) return right;
+                (span[left].Item1, span[right].Item1) = (span[right].Item1, span[left].Item1);
+            }
+            else
+            {
+                return right;
             }
         }
     }
