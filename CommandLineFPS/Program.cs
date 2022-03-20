@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace CommandLineFPS;
@@ -9,6 +10,11 @@ internal static class Program
     {
         public short X;
         public short Y;
+    }
+
+    private struct PairComparer : IComparer<(float, float)>
+    {
+        public int Compare((float, float) x, (float, float) y) => x.Item1 < y.Item1 ? -1 : 1;
     }
 
     private const long GenericRead = 0x80000000L;
@@ -47,6 +53,7 @@ internal static class Program
 
     private static unsafe void Main()
     {
+        var comparer = new PairComparer();
         var writeCoord = new COORD();
         char* screen = stackalloc char[ScreenWidth * ScreenHeight];
         IntPtr hConsole = CreateConsoleScreenBuffer(GenericRead | GenericWrite, 0, IntPtr.Zero, 1, IntPtr.Zero);
@@ -176,7 +183,7 @@ internal static class Program
                                 }
 
                                 // Sort Pairs from closest to farthest
-                                p.Sort((left, right) => left.Item1 < right.Item1 ? -1 : 1);
+                                p.Sort(comparer);
 
                                 // First two/three are closest (we will never see all four)
                                 float bound = 0.01f;
