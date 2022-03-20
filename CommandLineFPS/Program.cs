@@ -15,7 +15,8 @@ internal static class Program
     private const long GenericWrite = 0x40000000L;
 
     [DllImport("msvcrt.dll", CallingConvention = CallingConvention.Cdecl)]
-    private static extern unsafe int swprintf_s(char* buffer, int bufferCount, char* format, float f0, float f1, float f2, float f3);
+    private static extern unsafe int swprintf_s(char* buffer, int bufferCount, char* format, float f0, float f1, float f2,
+        float f3);
 
     [DllImport("kernel32.dll")]
     private static extern IntPtr CreateConsoleScreenBuffer(long dwDesiredAccess, uint dwShareMode, IntPtr lpSecurityAttributes,
@@ -43,36 +44,38 @@ internal static class Program
     private static float s_playerX = 14.7f;    // Player Start X
     private static float s_playerY = 5.09f;    // Player Start Y
     private static float s_speed = 5.0f;       // Walking Speed
+
     private static unsafe void Main()
     {
+        var writeCoord = new COORD();
+        char* screen = stackalloc char[ScreenWidth * ScreenHeight];
+        IntPtr hConsole = CreateConsoleScreenBuffer(GenericRead | GenericWrite, 0, IntPtr.Zero, 1, IntPtr.Zero);
+        SetConsoleActiveScreenBuffer(hConsole);
+
+        uint bytesWritten = 0;
+
+        // // Create Map of world space # = wall block, . = space
+        var map = string.Empty;
+        map += "#########.......";
+        map += "#...............";
+        map += "#.......########";
+        map += "#..............#";
+        map += "#......##......#";
+        map += "#......##......#";
+        map += "#..............#";
+        map += "###............#";
+        map += "##.............#";
+        map += "#......####..###";
+        map += "#......#.......#";
+        map += "#......#.......#";
+        map += "#..............#";
+        map += "#......#########";
+        map += "#..............#";
+        map += "################";
+
         fixed (char* statsFormat = "X=%3.2f, Y=%3.2f, A=%3.2f FPS=%3.2f ")
+        fixed (char* mapPtr = map)
         {
-            var writeCoord = new COORD();
-            char* screen = stackalloc char[ScreenWidth * ScreenHeight];
-            IntPtr hConsole = CreateConsoleScreenBuffer(GenericRead | GenericWrite, 0, IntPtr.Zero, 1, IntPtr.Zero);
-            SetConsoleActiveScreenBuffer(hConsole);
-
-            uint bytesWritten = 0;
-
-            // // Create Map of world space # = wall block, . = space
-            var map = string.Empty;
-            map += "#########.......";
-            map += "#...............";
-            map += "#.......########";
-            map += "#..............#";
-            map += "#......##......#";
-            map += "#......##......#";
-            map += "#..............#";
-            map += "###............#";
-            map += "##.............#";
-            map += "#......####..###";
-            map += "#......#.......#";
-            map += "#......#.......#";
-            map += "#..............#";
-            map += "#......#########";
-            map += "#..............#";
-            map += "################";
-
             DateTime tp1 = DateTime.Now;
             DateTime tp2 = DateTime.Now;
 
@@ -101,7 +104,7 @@ internal static class Program
                 {
                     s_playerX += MathF.Sin(s_playerAngle) * s_speed * elapsedSeconds;
                     s_playerY += MathF.Cos(s_playerAngle) * s_speed * elapsedSeconds;
-                    if (map[(int) s_playerX * MapWidth + (int) s_playerY] == '#')
+                    if (mapPtr[(int) s_playerX * MapWidth + (int) s_playerY] == '#')
                     {
                         s_playerX -= MathF.Sin(s_playerAngle) * s_speed * elapsedSeconds;
                         s_playerY -= MathF.Cos(s_playerAngle) * s_speed * elapsedSeconds;
@@ -113,7 +116,7 @@ internal static class Program
                 {
                     s_playerX -= MathF.Sin(s_playerAngle) * s_speed * elapsedSeconds;
                     s_playerY -= MathF.Cos(s_playerAngle) * s_speed * elapsedSeconds;
-                    if (map[(int) s_playerX * MapWidth + (int) s_playerY] == '#')
+                    if (mapPtr[(int) s_playerX * MapWidth + (int) s_playerY] == '#')
                     {
                         s_playerX += MathF.Sin(s_playerAngle) * s_speed * elapsedSeconds;
                         s_playerY += MathF.Cos(s_playerAngle) * s_speed * elapsedSeconds;
@@ -152,7 +155,7 @@ internal static class Program
                         else
                         {
                             // Ray is inbounds so test to see if the ray cell is a wall block
-                            if (map[testX * MapWidth + testY] == '#')
+                            if (mapPtr[testX * MapWidth + testY] == '#')
                             {
                                 // Ray has hit wall
                                 hitWall = true;
@@ -225,7 +228,7 @@ internal static class Program
                 // Display Map
                 for (var nx = 0; nx < MapWidth; nx++)
                 for (var ny = 0; ny < MapHeight; ny++)
-                    screen[((ny + 1) * ScreenWidth + nx) + 2] = map[ny * MapWidth + nx];
+                    screen[((ny + 1) * ScreenWidth + nx) + 2] = mapPtr[ny * MapWidth + nx];
                 screen[(((int) s_playerX + 1) * ScreenWidth + (int) s_playerY) + 2] = 'P';
 
                 // Display Frame
