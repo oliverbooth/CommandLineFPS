@@ -90,6 +90,8 @@ internal static class Program
             new Thread(InputWorker).Start();
 
             GC.TryStartNoGCRegion(1024 * 1024 * 100);
+            GC.Collect();
+
             while (true)
             {
                 // We'll need time differential per frame to calculate modification
