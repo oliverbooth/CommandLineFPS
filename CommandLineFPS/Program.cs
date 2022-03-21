@@ -1,42 +1,11 @@
 using System;
-using System.Runtime.InteropServices;
 using System.Threading;
-
-// ReSharper disable IdentifierTypo
-// ReSharper disable StringLiteralTypo
+using PInvoke;
 
 namespace CommandLineFPS;
 
 internal static class Program
 {
-    [StructLayout(LayoutKind.Sequential)]
-    private readonly struct Coord
-    {
-        private readonly short X;
-        private readonly short Y;
-    }
-
-    private const long GenericRead = 0x80000000L;
-    private const long GenericWrite = 0x40000000L;
-
-    [DllImport("msvcrt.dll", CallingConvention = CallingConvention.Cdecl)]
-    private static extern unsafe int swprintf_s(char* buffer, int bufferCount, char* format, float f0, float f1, float f2,
-        float f3);
-
-    [DllImport("kernel32.dll")]
-    private static extern IntPtr CreateConsoleScreenBuffer(long dwDesiredAccess, uint dwShareMode, IntPtr lpSecurityAttributes,
-        uint dwFlags, IntPtr lpScreenBufferData);
-
-    [DllImport("kernel32.dll")]
-    private static extern bool SetConsoleActiveScreenBuffer(IntPtr hConsoleOuptut);
-
-    [DllImport("kernel32.dll")]
-    private static extern unsafe bool WriteConsoleOutputCharacterW(IntPtr hConsoleOutput, char* lpCharacter, uint length,
-        Coord dwWriteCoord, ref uint lpNumberOfCharsWritten);
-
-    [DllImport("user32.dll")]
-    private static extern short GetAsyncKeyState(ushort vKey);
-
     private const int ScreenWidth = 120; // Console Screen Size X (columns)
     private const int ScreenHeight = 40; // Console Screen Size Y (rows)
 
@@ -57,10 +26,15 @@ internal static class Program
 
     private static unsafe void Main()
     {
-        var writeCoord = new Coord();
+        var writeCoord = new COORD();
         char* screen = stackalloc char[ScreenWidth * ScreenHeight];
-        IntPtr hConsole = CreateConsoleScreenBuffer(GenericRead | GenericWrite, 0, IntPtr.Zero, 1, IntPtr.Zero);
-        SetConsoleActiveScreenBuffer(hConsole);
+
+        var access = new Kernel32.ACCESS_MASK((uint) (Native.GenericRead | Native.GenericWrite));
+        const Kernel32.ConsoleScreenBufferFlag flags = Kernel32.ConsoleScreenBufferFlag.CONSOLE_TEXTMODE_BUFFER;
+        var securityAttributes = Kernel32.SECURITY_ATTRIBUTES.Create();
+        IntPtr hConsole =
+            Kernel32.CreateConsoleScreenBuffer(access, Kernel32.FileShare.None, securityAttributes, flags, IntPtr.Zero);
+        Kernel32.SetConsoleActiveScreenBuffer(hConsole);
 
         uint bytesWritten = 0;
 
@@ -254,7 +228,7 @@ internal static class Program
                 }
 
                 // Display Stats
-                swprintf_s(screen, 40, statsFormat, s_playerX, s_playerY, s_playerAngle, 1.0f / elapsedSeconds);
+                Native.swprintf_s(screen, 40, statsFormat, s_playerX, s_playerY, s_playerAngle, 1.0f / elapsedSeconds);
 
                 // Display Map
                 for (var nx = 0; nx < MapWidth; nx++)
@@ -264,7 +238,7 @@ internal static class Program
 
                 // Display Frame
                 screen[ScreenWidth * ScreenHeight - 1] = '\0';
-                WriteConsoleOutputCharacterW(hConsole, screen, ScreenWidth * ScreenHeight, writeCoord, ref bytesWritten);
+                Native.WriteConsoleOutputCharacterW(hConsole, screen, ScreenWidth * ScreenHeight, writeCoord, ref bytesWritten);
             }
         }
 
@@ -275,10 +249,10 @@ internal static class Program
     {
         while (true)
         {
-            s_moveForward = (GetAsyncKeyState('W') & 0x8000) != 0;
-            s_moveBack = (GetAsyncKeyState('S') & 0x8000) != 0;
-            s_turnLeft = (GetAsyncKeyState('A') & 0x8000) != 0;
-            s_turnRight = (GetAsyncKeyState('D') & 0x8000) != 0;
+            s_moveForward = (User32.GetAsyncKeyState('W') & 0x8000) != 0;
+            s_moveBack = (User32.GetAsyncKeyState('S') & 0x8000) != 0;
+            s_turnLeft = (User32.GetAsyncKeyState('A') & 0x8000) != 0;
+            s_turnRight = (User32.GetAsyncKeyState('D') & 0x8000) != 0;
         }
 
         // ReSharper disable once FunctionNeverReturns

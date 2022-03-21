@@ -7,4 +7,9 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
+    <ItemGroup>
+        <PackageReference Include="PInvoke.Kernel32" Version="0.7.104"/>
+        <PackageReference Include="PInvoke.User32" Version="0.7.104"/>
+    </ItemGroup>
+
 </Project>
