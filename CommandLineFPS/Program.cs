@@ -2,14 +2,18 @@ using System;
 using System.Runtime.InteropServices;
 using System.Threading;
 
+// ReSharper disable IdentifierTypo
+// ReSharper disable StringLiteralTypo
+
 namespace CommandLineFPS;
 
 internal static class Program
 {
-    private struct COORD
+    [StructLayout(LayoutKind.Sequential)]
+    private readonly struct Coord
     {
-        public short X;
-        public short Y;
+        private readonly short X;
+        private readonly short Y;
     }
 
     private const long GenericRead = 0x80000000L;
@@ -28,7 +32,7 @@ internal static class Program
 
     [DllImport("kernel32.dll")]
     private static extern unsafe bool WriteConsoleOutputCharacterW(IntPtr hConsoleOutput, char* lpCharacter, uint length,
-        COORD dwWriteCoord, ref uint lpNumberOfCharsWritten);
+        Coord dwWriteCoord, ref uint lpNumberOfCharsWritten);
 
     [DllImport("user32.dll")]
     private static extern short GetAsyncKeyState(ushort vKey);
@@ -41,10 +45,10 @@ internal static class Program
 
     private const float Fov = MathF.PI / 4.0f; // Field of View
     private const float Depth = 16.0f;         // Maximum rendering distance
-    private static float s_playerAngle = 0.0f; // Player Start Rotation
+    private static float s_playerAngle;        // Player Start Rotation
     private static float s_playerX = 14.7f;    // Player Start X
     private static float s_playerY = 5.09f;    // Player Start Y
-    private static float s_speed = 5.0f;       // Walking Speed
+    private const float Speed = 5.0f;          // Walking Speed
 
     private static volatile bool s_moveForward; // Movement flags
     private static volatile bool s_moveBack;
@@ -53,7 +57,7 @@ internal static class Program
 
     private static unsafe void Main()
     {
-        var writeCoord = new COORD();
+        var writeCoord = new Coord();
         char* screen = stackalloc char[ScreenWidth * ScreenHeight];
         IntPtr hConsole = CreateConsoleScreenBuffer(GenericRead | GenericWrite, 0, IntPtr.Zero, 1, IntPtr.Zero);
         SetConsoleActiveScreenBuffer(hConsole);
@@ -83,8 +87,6 @@ internal static class Program
         fixed (char* mapPtr = map)
         {
             int tp1 = Environment.TickCount;
-            int tp2 = Environment.TickCount;
-
             Span<(float, float)> p = stackalloc (float, float)[4];
 
             new Thread(InputWorker).Start();
@@ -95,17 +97,17 @@ internal static class Program
             while (true)
             {
                 // We'll need time differential per frame to calculate modification
-                // to movement speeds, to ensure consistant movement, as ray-tracing
+                // to movement speeds, to ensure consistent movement, as ray-tracing
                 // is non-deterministic
-                tp2 = Environment.TickCount;
+                int tp2 = Environment.TickCount;
                 int elapsedTime = tp2 - tp1;
                 tp1 = tp2;
                 float elapsedSeconds = elapsedTime / 1000.0f;
 
-                float movementFactor = s_speed * elapsedSeconds;
+                float movementFactor = Speed * elapsedSeconds;
                 float xDelta = MathF.Sin(s_playerAngle) * movementFactor;
                 float yDelta = MathF.Cos(s_playerAngle) * movementFactor;
-                float angleDelta = (s_speed * 0.75f) * elapsedSeconds;
+                float angleDelta = (Speed * 0.75f) * elapsedSeconds;
 
                 // Handle CCW Rotation
                 if (s_turnLeft)
@@ -265,6 +267,8 @@ internal static class Program
                 WriteConsoleOutputCharacterW(hConsole, screen, ScreenWidth * ScreenHeight, writeCoord, ref bytesWritten);
             }
         }
+
+        // ReSharper disable once FunctionNeverReturns
     }
 
     private static void InputWorker()
@@ -276,5 +280,7 @@ internal static class Program
             s_turnLeft = (GetAsyncKeyState('A') & 0x8000) != 0;
             s_turnRight = (GetAsyncKeyState('D') & 0x8000) != 0;
         }
+
+        // ReSharper disable once FunctionNeverReturns
     }
 }
