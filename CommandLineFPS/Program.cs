@@ -186,7 +186,7 @@ internal static class Program
                                 }
 
                                 // First two/three are closest (we will never see all four)
-                                const float bound = 0.99995f;
+                                const float bound = 0.99995f; // acos(x) < 0.01 && cos(acos(x)) > cos(0.01) for all 0.99995 < x <= 1
                                 if (p[0].Item2 > bound ||
                                     p[1].Item2 > bound ||
                                     p[2].Item2 > bound)
