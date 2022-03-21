@@ -198,14 +198,14 @@ internal static class Program
                     int floor = ScreenHeight - ceiling;
 
                     // Shader walls based on distance
-                    char shade;
-                    if (distanceToWall <= Depth / 4.0f) shade = '█';     // Very close
-                    else if (distanceToWall < Depth / 3.0f) shade = '▓'; //
-                    else if (distanceToWall < Depth / 2.0f) shade = '▒'; //
-                    else if (distanceToWall < Depth) shade = '░';        //
-                    else shade = ' ';                                    // Too far away
-
-                    if (boundary) shade = ' '; // Black it out
+                    var shade = ' ';
+                    if (!boundary)
+                    {
+                        if (distanceToWall <= Depth / 4.0f) shade = '█';     // Very close
+                        else if (distanceToWall < Depth / 3.0f) shade = '▓'; //
+                        else if (distanceToWall < Depth / 2.0f) shade = '▒'; //
+                        else if (distanceToWall < Depth) shade = '░';        //
+                    }
 
                     for (int y = 0; y < ScreenHeight; y++)
                     {
