@@ -29,11 +29,13 @@ internal static class Program
         var writeCoord = new COORD();
         char* screen = stackalloc char[ScreenWidth * ScreenHeight];
 
-        var access = new Kernel32.ACCESS_MASK((uint) (Native.GenericRead | Native.GenericWrite));
         const Kernel32.ConsoleScreenBufferFlag flags = Kernel32.ConsoleScreenBufferFlag.CONSOLE_TEXTMODE_BUFFER;
+        const Kernel32.FileShare shareMode = Kernel32.FileShare.None;
+
+        var access = new Kernel32.ACCESS_MASK((uint) (Native.GenericRead | Native.GenericWrite));
         var securityAttributes = Kernel32.SECURITY_ATTRIBUTES.Create();
-        IntPtr hConsole =
-            Kernel32.CreateConsoleScreenBuffer(access, Kernel32.FileShare.None, securityAttributes, flags, IntPtr.Zero);
+
+        IntPtr hConsole = Kernel32.CreateConsoleScreenBuffer(access, shareMode, securityAttributes, flags, IntPtr.Zero);
         Kernel32.SetConsoleActiveScreenBuffer(hConsole);
 
         uint bytesWritten = 0;
