@@ -99,36 +99,41 @@ internal static class Program
                 TimeSpan elapsedTime = tp2 - tp1;
                 tp1 = tp2;
                 float elapsedSeconds = (float) elapsedTime.TotalSeconds;
+                float movementFactor = s_speed * elapsedSeconds;
+                float xDelta = MathF.Sin(s_playerAngle) * movementFactor;
+                float yDelta = MathF.Cos(s_playerAngle) * movementFactor;
+                float angleDelta = (s_speed * 0.75f) * elapsedSeconds;
 
                 // Handle CCW Rotation
                 if (s_turnLeft)
-                    s_playerAngle -= (s_speed * 0.75f) * elapsedSeconds;
+                    s_playerAngle -= angleDelta;
 
                 // Handle CW Rotation
                 if (s_turnRight)
-                    s_playerAngle += (s_speed * 0.75f) * elapsedSeconds;
+                    s_playerAngle += angleDelta;
+
 
                 // Handle Forwards movement & collision
                 if (s_moveForward)
                 {
-                    s_playerX += MathF.Sin(s_playerAngle) * s_speed * elapsedSeconds;
-                    s_playerY += MathF.Cos(s_playerAngle) * s_speed * elapsedSeconds;
+                    s_playerX += xDelta;
+                    s_playerY += yDelta;
                     if (mapPtr[(int) s_playerX * MapWidth + (int) s_playerY] == '#')
                     {
-                        s_playerX -= MathF.Sin(s_playerAngle) * s_speed * elapsedSeconds;
-                        s_playerY -= MathF.Cos(s_playerAngle) * s_speed * elapsedSeconds;
+                        s_playerX -= xDelta;
+                        s_playerY -= yDelta;
                     }
                 }
 
                 // Handle backwards movement & collision
                 if (s_moveBack)
                 {
-                    s_playerX -= MathF.Sin(s_playerAngle) * s_speed * elapsedSeconds;
-                    s_playerY -= MathF.Cos(s_playerAngle) * s_speed * elapsedSeconds;
+                    s_playerX -= xDelta;
+                    s_playerY -= yDelta;
                     if (mapPtr[(int) s_playerX * MapWidth + (int) s_playerY] == '#')
                     {
-                        s_playerX += MathF.Sin(s_playerAngle) * s_speed * elapsedSeconds;
-                        s_playerY += MathF.Cos(s_playerAngle) * s_speed * elapsedSeconds;
+                        s_playerX += xDelta;
+                        s_playerY += yDelta;
                     }
                 }
 
