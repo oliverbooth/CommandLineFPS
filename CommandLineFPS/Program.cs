@@ -174,6 +174,10 @@ internal static class Program
                                 // Ray has hit wall
                                 hitWall = true;
 
+                                // Reset tuple span
+                                for (int i = 0; i < p.Length; i++)
+                                    p[i] = (float.MaxValue, 0);
+
                                 // To highlight tile boundaries, cast a ray from each corner
                                 // of the tile, to the player. The more coincident this ray
                                 // is to the rendering ray, the closer we are to a tile 
@@ -182,15 +186,23 @@ internal static class Program
                                 for (int ty = 0; ty < 2; ty++)
                                 {
                                     // Angle of corner to eye
-                                    float vy = (float) testY + ty - s_playerY;
-                                    float vx = (float) testX + tx - s_playerX;
+                                    float vy = testY + ty - s_playerY;
+                                    float vx = testX + tx - s_playerX;
                                     float d = MathF.Sqrt(vx * vx + vy * vy);
                                     float dot = (eyeX * vx / d) + (eyeY * vy / d);
                                     p[tx + (ty * 2)] = (d, dot);
-                                }
 
-                                // Sort Pairs from closest to farthest
-                                Sort(p);
+                                    // My attempt at some kind of hacky insertion sort
+                                    // Inserts tuple closest to farthest
+                                    for (int i = 0; i < p.Length; i++)
+                                    {
+                                        if (p[i].Item1 > d)
+                                        {
+                                            p[i] = (d, dot);
+                                            break;
+                                        }
+                                    }
+                                }
 
                                 // First two/three are closest (we will never see all four)
                                 float bound = 0.01f;
@@ -260,56 +272,6 @@ internal static class Program
             s_moveBack = (GetAsyncKeyState('S') & 0x8000) != 0;
             s_turnLeft = (GetAsyncKeyState('A') & 0x8000) != 0;
             s_turnRight = (GetAsyncKeyState('D') & 0x8000) != 0;
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static void Sort(Span<(float, float)> span)
-    {
-        Sort(span, 0, span.Length - 1);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static void Sort(Span<(float, float)> span, int left, int right)
-    {
-        while (true)
-        {
-            if (right < 0) right = span.Length + right;
-            if (left >= right) return;
-
-            int pivot = Partition(span, left, right);
-            if (pivot > 1) Sort(span, left, pivot - 1);
-            if (pivot + 1 < right)
-            {
-                left = pivot + 1;
-                continue;
-            }
-
-            break;
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static int Partition(Span<(float, float)> span, int left, int right)
-    {
-        float pivot = span[left].Item1;
-        while (true)
-        {
-            while (span[left].Item1 < pivot)
-                left++;
-
-            while (span[right].Item1 > pivot)
-                right--;
-
-            if (left < right)
-            {
-                if (span[left] == span[right]) return right;
-                (span[left].Item1, span[right].Item1) = (span[right].Item1, span[left].Item1);
-            }
-            else
-            {
-                return right;
-            }
         }
     }
 }
