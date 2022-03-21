@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 
@@ -83,22 +82,24 @@ internal static class Program
         fixed (char* statsFormat = "X=%3.2f, Y=%3.2f, A=%3.2f FPS=%3.2f ")
         fixed (char* mapPtr = map)
         {
-            DateTime tp1 = DateTime.Now;
-            DateTime tp2 = DateTime.Now;
+            int tp1 = Environment.TickCount;
+            int tp2 = Environment.TickCount;
 
             Span<(float, float)> p = stackalloc (float, float)[4];
 
             new Thread(InputWorker).Start();
 
+            GC.TryStartNoGCRegion(1024 * 1024 * 100);
             while (true)
             {
                 // We'll need time differential per frame to calculate modification
                 // to movement speeds, to ensure consistant movement, as ray-tracing
                 // is non-deterministic
-                tp2 = DateTime.Now;
-                TimeSpan elapsedTime = tp2 - tp1;
+                tp2 = Environment.TickCount;
+                int elapsedTime = tp2 - tp1;
                 tp1 = tp2;
-                float elapsedSeconds = (float) elapsedTime.TotalSeconds;
+                float elapsedSeconds = elapsedTime / 1000.0f;
+
                 float movementFactor = s_speed * elapsedSeconds;
                 float xDelta = MathF.Sin(s_playerAngle) * movementFactor;
                 float yDelta = MathF.Cos(s_playerAngle) * movementFactor;
