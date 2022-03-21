@@ -186,10 +186,10 @@ internal static class Program
                                 }
 
                                 // First two/three are closest (we will never see all four)
-                                const float bound = 0.01f;
-                                if (MathF.Acos(p[0].Item2) < bound ||
-                                    MathF.Acos(p[1].Item2) < bound ||
-                                    MathF.Acos(p[2].Item2) < bound)
+                                const float bound = 0.99995f;
+                                if (p[0].Item2 > bound ||
+                                    p[1].Item2 > bound ||
+                                    p[2].Item2 > bound)
                                     boundary = true;
                             }
                         }
